@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
             viewportPlugin.makeFollowPuckViewportState(
                 FollowPuckViewportStateOptions.Builder()
                     .bearing(FollowPuckViewportStateBearing.Constant(0.0))
-                    .padding(EdgeInsets(400.0 * resources.displayMetrics.density, 0.0, 0.0, 0.0))
+                    .padding(EdgeInsets(200.0 * resources.displayMetrics.density, 0.0, 0.0, 0.0))
                     .build()
             )
 
