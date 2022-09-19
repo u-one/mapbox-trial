@@ -2,6 +2,7 @@ package net.uoneweb.android.mapboxtrial
 
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListene
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.maps.plugin.locationcomponent.location2
+import com.mapbox.maps.plugin.scalebar.scalebar
 import com.mapbox.maps.plugin.viewport.data.FollowPuckViewportStateBearing
 import com.mapbox.maps.plugin.viewport.data.FollowPuckViewportStateOptions
 import com.mapbox.maps.plugin.viewport.state.FollowPuckViewportState
@@ -65,8 +67,17 @@ class MapFragment : Fragment() {
         }
         setTrackingMode(false)
         registerEventObserver(mapView)
-
+        setupScaleBarPlugin(mapView)
         //setupViewportPlugin(mapView)
+    }
+
+    private fun setupScaleBarPlugin(mapView: MapView) {
+        val scaleBarPlugin = mapView.scalebar
+        scaleBarPlugin.updateSettings {
+            enabled = true
+            position = Gravity.BOTTOM or Gravity.START
+            marginBottom = 10.0f * resources.displayMetrics.density
+        }
     }
 
     private fun setupViewportPlugin(mapView: MapView) {
