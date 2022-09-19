@@ -8,8 +8,17 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.mapbox.geojson.Point
-import com.mapbox.maps.*
+import com.mapbox.maps.CameraOptions
+import com.mapbox.maps.EdgeInsets
+import com.mapbox.maps.MapEvents
+import com.mapbox.maps.MapView
 import com.mapbox.maps.plugin.animation.flyTo
+import com.mapbox.maps.plugin.annotation.annotations
+import com.mapbox.maps.plugin.annotation.generated.CircleAnnotation
+import com.mapbox.maps.plugin.annotation.generated.CircleAnnotationOptions
+import com.mapbox.maps.plugin.annotation.generated.createCircleAnnotationManager
+import com.mapbox.maps.plugin.gestures.OnMapClickListener
+import com.mapbox.maps.plugin.gestures.gestures
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
@@ -46,8 +55,12 @@ class MapFragment : Fragment() {
         }
     }
 
+    private val STYLE_DEFAULT = "mapbox://styles/backflip/cl88dc0ag000r14o4kyd2dk98"
+
+    private var circleAnnotation: CircleAnnotation? = null
+
     private fun initializeMapView(mapView: MapView) {
-        mapView.getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS) {
+        mapView.getMapboxMap().loadStyleUri(STYLE_DEFAULT) { style ->
             mapView.location.updateSettings {
                 enabled = true
                 this.pulsingEnabled = false
@@ -56,7 +69,6 @@ class MapFragment : Fragment() {
                 showAccuracyRing = true
                 puckBearingEnabled = true
             }
-
             mapView.getMapboxMap().flyTo(
                 CameraOptions.Builder()
                     .bearing(0.0)
@@ -65,10 +77,13 @@ class MapFragment : Fragment() {
                     .build()
             )
         }
-        setTrackingMode(false)
+
+        initializeIndicatorListener(mapView)
+        setTrackingMode(true)
         registerEventObserver(mapView)
         setupScaleBarPlugin(mapView)
         //setupViewportPlugin(mapView)
+        setupGesturesPlugin(mapView)
     }
 
     private fun setupScaleBarPlugin(mapView: MapView) {
@@ -95,6 +110,16 @@ class MapFragment : Fragment() {
         }
     }
 
+    private fun setupGesturesPlugin(mapView: MapView) {
+        val gesturesPlugin = mapView.gestures
+        gesturesPlugin.addOnMapClickListener(object : OnMapClickListener {
+            override fun onMapClick(point: Point): Boolean {
+                createCircleAnnotation(mapView, point)
+                return true
+            }
+        })
+    }
+
     private fun registerEventObserver(mapView: MapView) {
         mapView.getMapboxMap().subscribe(
             { event -> Log.d("MapEvents", event.type) },
@@ -111,34 +136,45 @@ class MapFragment : Fragment() {
     }
 
     private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener { bearing ->
-        binding?.mapView?.getMapboxMap()?.setCamera(
-            CameraOptions.Builder().bearing(bearing).build()
-        )
+        if (trackingMode) {
+            binding?.mapView?.getMapboxMap()?.setCamera(
+                CameraOptions.Builder().bearing(bearing).build()
+            )
+        }
     }
 
     private val onIndicatorPositionChangedListener = OnIndicatorPositionChangedListener { point ->
-        binding?.mapView?.getMapboxMap()?.setCamera(CameraOptions.Builder().center(point).build())
+        if (trackingMode) {
+            binding?.mapView?.getMapboxMap()
+                ?.setCamera(CameraOptions.Builder().center(point).build())
+        }
     }
 
+    private var trackingMode: Boolean = false
+
     private fun setTrackingMode(enable: Boolean) {
-        binding?.mapView?.let { mapView ->
-            mapView.location.removeOnIndicatorBearingChangedListener(
-                onIndicatorBearingChangedListener
-            )
-            mapView.location.removeOnIndicatorPositionChangedListener(
-                onIndicatorPositionChangedListener
-            )
+        trackingMode = enable == true
+    }
 
-            if (enable) {
-                mapView.location.addOnIndicatorBearingChangedListener(
-                    onIndicatorBearingChangedListener
-                )
+    private fun initializeIndicatorListener(mapView: MapView) {
+        mapView.location.addOnIndicatorBearingChangedListener(
+            onIndicatorBearingChangedListener
+        )
 
-                mapView.location.addOnIndicatorPositionChangedListener(
-                    onIndicatorPositionChangedListener
-                )
-            }
-        }
+        mapView.location.addOnIndicatorPositionChangedListener(
+            onIndicatorPositionChangedListener
+        )
+    }
+
+    private fun createCircleAnnotation(
+        mapView: MapView, point: Point
+    ) {
+        val annotationApi = mapView.annotations
+        val circleAnnotationManager = annotationApi?.createCircleAnnotationManager()
+        val circleAnnotationOptions: CircleAnnotationOptions = CircleAnnotationOptions()
+            .withPoint(point)
+            .withCircleRadius(10.0)
+        circleAnnotationManager.create(circleAnnotationOptions)
     }
 
     override fun onStart() {
