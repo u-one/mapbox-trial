@@ -1,20 +1,16 @@
 package net.uoneweb.android.mapboxtrial
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.mapbox.maps.CameraOptions
-import com.mapbox.maps.EdgeInsets
 import com.mapbox.maps.MapView
 import com.mapbox.maps.Style
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
-import com.mapbox.maps.plugin.viewport.data.FollowPuckViewportStateBearing
-import com.mapbox.maps.plugin.viewport.data.FollowPuckViewportStateOptions
-import com.mapbox.maps.plugin.viewport.state.FollowPuckViewportState
-import com.mapbox.maps.plugin.viewport.viewport
 import net.uoneweb.android.mapboxtrial.databinding.FragmentMapBinding
 
 class MapFragment : Fragment() {
@@ -54,19 +50,29 @@ class MapFragment : Fragment() {
             mapView.location.updateSettings {
                 enabled = true
             }
+            mapView.location.addOnIndicatorBearingChangedListener() {
+                Log.d("", String.format("OnIndicatorBearingChangedListener %s", it))
+            }
+            mapView.location.addOnIndicatorPositionChangedListener() { point ->
+                Log.d("", String.format("OnIndicatorPositionChangedListener %s", point))
+                mapView.getMapboxMap().setCamera(CameraOptions.Builder().center(point).build())
+            }
         }
 
+        /*
         val viewportPlugin = mapView?.viewport
         val followPuckViewportState: FollowPuckViewportState =
             viewportPlugin.makeFollowPuckViewportState(
                 FollowPuckViewportStateOptions.Builder()
                     .bearing(FollowPuckViewportStateBearing.Constant(0.0))
-                    .padding(EdgeInsets(200.0 * resources.displayMetrics.density, 0.0, 0.0, 0.0))
+                    .padding(EdgeInsets(100.0 * resources.displayMetrics.density, 0.0, 0.0, 0.0))
+                    .pitch(0.0)
                     .build()
             )
 
         viewportPlugin.transitionTo(followPuckViewportState) { success ->
         }
+         */
     }
 
     override fun onStart() {
