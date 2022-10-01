@@ -1,5 +1,6 @@
 package net.uoneweb.android.mapboxtrial
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -52,6 +53,23 @@ class MapFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding?.mapView?.let {
             initializeMapView(it)
+        }
+        setupFloatingActionButton()
+    }
+
+    private fun setupFloatingActionButton() {
+        binding?.fab?.setOnClickListener { view ->
+            val nextMode = !trackingMode
+            setTrackingMode(nextMode)
+            view.isSelected = nextMode
+            view.backgroundTintList = ColorStateList(
+                arrayOf(
+                    intArrayOf(),
+                    intArrayOf(android.R.attr.state_selected)
+                ),
+                intArrayOf(R.color.white, R.color.purple_200)
+            )
+
         }
     }
 
