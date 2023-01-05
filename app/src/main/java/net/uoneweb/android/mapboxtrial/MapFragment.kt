@@ -1,6 +1,5 @@
 package net.uoneweb.android.mapboxtrial
 
-import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -8,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.EdgeInsets
@@ -33,6 +33,7 @@ import net.uoneweb.android.mapboxtrial.databinding.FragmentMapBinding
 
 class MapFragment : Fragment() {
 
+    private val fragmentViewModel: MapFragmentViewModel by viewModels()
     private var binding: FragmentMapBinding? = null
 
     override fun onCreateView(
@@ -40,7 +41,10 @@ class MapFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentMapBinding.inflate(inflater)
+        binding = FragmentMapBinding.inflate(inflater).apply {
+            viewModel = fragmentViewModel
+            lifecycleOwner = viewLifecycleOwner
+        }
         return binding?.root
     }
 
@@ -54,9 +58,10 @@ class MapFragment : Fragment() {
         binding?.mapView?.let {
             initializeMapView(it)
         }
-        setupFloatingActionButton()
+        //setupFloatingActionButton()
     }
 
+    /*
     private fun setupFloatingActionButton() {
         binding?.fab?.setOnClickListener { view ->
             val nextMode = !trackingMode
@@ -72,6 +77,7 @@ class MapFragment : Fragment() {
 
         }
     }
+     */
 
     private val STYLE_DEFAULT = "mapbox://styles/backflip/cl88dc0ag000r14o4kyd2dk98"
 
@@ -192,7 +198,7 @@ class MapFragment : Fragment() {
         val circleAnnotationOptions: CircleAnnotationOptions = CircleAnnotationOptions()
             .withPoint(point)
             .withCircleRadius(10.0)
-        circleAnnotationManager.create(circleAnnotationOptions)
+        circleAnnotationManager?.create(circleAnnotationOptions)
     }
 
     override fun onStart() {
