@@ -1,13 +1,21 @@
 package net.uoneweb.android.mapboxtrial
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.DrawableRes
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.mapbox.android.gestures.RotateGestureDetector
 import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.EdgeInsets
@@ -15,10 +23,8 @@ import com.mapbox.maps.MapEvents
 import com.mapbox.maps.MapView
 import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
-import com.mapbox.maps.plugin.annotation.generated.CircleAnnotation
-import com.mapbox.maps.plugin.annotation.generated.CircleAnnotationOptions
-import com.mapbox.maps.plugin.annotation.generated.createCircleAnnotationManager
-import com.mapbox.maps.plugin.gestures.OnMapClickListener
+import com.mapbox.maps.plugin.annotation.generated.*
+import com.mapbox.maps.plugin.gestures.OnRotateListener
 import com.mapbox.maps.plugin.gestures.gestures
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
@@ -136,11 +142,21 @@ class MapFragment : Fragment() {
 
     private fun setupGesturesPlugin(mapView: MapView) {
         val gesturesPlugin = mapView.gestures
-        gesturesPlugin.addOnMapClickListener(object : OnMapClickListener {
-            override fun onMapClick(point: Point): Boolean {
-                createCircleAnnotation(mapView, point)
-                return true
+        gesturesPlugin.addOnMapClickListener { point ->
+            //addCircleAnnotation(mapView, point)
+            addPointAnnotationToMap(mapView, point)
+            true
+        }
+        gesturesPlugin.addOnRotateListener(object : OnRotateListener {
+            override fun onRotate(detector: RotateGestureDetector) {
             }
+
+            override fun onRotateBegin(detector: RotateGestureDetector) {
+            }
+
+            override fun onRotateEnd(detector: RotateGestureDetector) {
+            }
+
         })
     }
 
@@ -190,7 +206,7 @@ class MapFragment : Fragment() {
         )
     }
 
-    private fun createCircleAnnotation(
+    private fun addCircleAnnotation(
         mapView: MapView, point: Point
     ) {
         val annotationApi = mapView.annotations
@@ -199,6 +215,43 @@ class MapFragment : Fragment() {
             .withPoint(point)
             .withCircleRadius(10.0)
         circleAnnotationManager?.create(circleAnnotationOptions)
+    }
+
+    private fun addPointAnnotationToMap(mapView: MapView, point: Point) {
+        bitmapFromDrawableRes(requireContext(), R.drawable.red_marker)?.let {
+            val annotationApi = mapView.annotations
+            val pointAnnotationManager = annotationApi.createPointAnnotationManager()
+            val pointAnntationOptions: PointAnnotationOptions = PointAnnotationOptions()
+                .withPoint(point)
+                .withIconImage(it)
+            pointAnnotationManager.create(pointAnntationOptions)
+        }
+
+
+    }
+
+    private fun bitmapFromDrawableRes(context: Context, @DrawableRes resourceid: Int) =
+        convertDrawableToBitmap(AppCompatResources.getDrawable(context, resourceid))
+
+    private fun convertDrawableToBitmap(sourceDrawable: Drawable?): Bitmap? {
+        if (sourceDrawable == null) {
+            return null
+        }
+        return if (sourceDrawable is BitmapDrawable) {
+            sourceDrawable.bitmap
+        } else {
+            val constantState = sourceDrawable.constantState ?: return null
+            val drawable = constantState.newDrawable().mutate()
+            val bitmap: Bitmap = Bitmap.createBitmap(
+                drawable.intrinsicWidth,
+                drawable.intrinsicHeight,
+                Bitmap.Config.ARGB_8888
+            )
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            bitmap
+        }
     }
 
     override fun onStart() {
