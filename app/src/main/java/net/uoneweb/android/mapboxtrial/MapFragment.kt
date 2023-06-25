@@ -17,10 +17,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.mapbox.android.gestures.RotateGestureDetector
 import com.mapbox.geojson.Point
-import com.mapbox.maps.CameraOptions
-import com.mapbox.maps.EdgeInsets
-import com.mapbox.maps.MapEvents
-import com.mapbox.maps.MapView
+import com.mapbox.maps.*
+import com.mapbox.maps.extension.observable.eventdata.CameraChangedEventData
 import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.*
@@ -40,28 +38,30 @@ import net.uoneweb.android.mapboxtrial.databinding.FragmentMapBinding
 class MapFragment : Fragment() {
 
     private val fragmentViewModel: MapFragmentViewModel by viewModels()
-    private var binding: FragmentMapBinding? = null
+    private var _binding: FragmentMapBinding? = null
+
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentMapBinding.inflate(inflater).apply {
+        _binding = FragmentMapBinding.inflate(inflater).apply {
             viewModel = fragmentViewModel
             lifecycleOwner = viewLifecycleOwner
         }
-        return binding?.root
+        return _binding?.root
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        binding = null
+        _binding = null
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding?.mapView?.let {
+        binding.mapView.let {
             initializeMapView(it)
         }
         //setupFloatingActionButton()
@@ -109,7 +109,7 @@ class MapFragment : Fragment() {
         }
 
         initializeIndicatorListener(mapView)
-        setTrackingMode(true)
+        setTrackingMode(false)
         registerEventObserver(mapView)
         setupScaleBarPlugin(mapView)
         //setupViewportPlugin(mapView)
@@ -173,11 +173,16 @@ class MapFragment : Fragment() {
                 MapEvents.SOURCE_DATA_LOADED
             )
         )
+        mapView.getMapboxMap().addOnCameraChangeListener(::onCameraChanged)
+    }
+
+    private fun onCameraChanged(eventData: CameraChangedEventData) {
+        updateCurrentInfo()
     }
 
     private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener { bearing ->
         if (trackingMode) {
-            binding?.mapView?.getMapboxMap()?.setCamera(
+            binding.mapView.getMapboxMap().setCamera(
                 CameraOptions.Builder().bearing(bearing).build()
             )
         }
@@ -185,8 +190,8 @@ class MapFragment : Fragment() {
 
     private val onIndicatorPositionChangedListener = OnIndicatorPositionChangedListener { point ->
         if (trackingMode) {
-            binding?.mapView?.getMapboxMap()
-                ?.setCamera(CameraOptions.Builder().center(point).build())
+            binding.mapView.getMapboxMap()
+                .setCamera(CameraOptions.Builder().center(point).build())
         }
     }
 
@@ -270,5 +275,19 @@ class MapFragment : Fragment() {
         super.onDestroy()
     }
 
+    private fun updateCurrentInfo() {
+        val center = getCenterPosition()
+        binding.currentPosition.text =
+            String.format("Center lat=%.6f lon=%.6f", center.latitude(), center.longitude())
+        binding.currentZoom.text = String.format("Zoom=%.2f", getCurrentZoom())
+
+    }
+
+    private fun getCenterPosition(): Point = getCameraState().center
+
+    private fun getCurrentZoom(): Double = getCameraState().zoom
+
+    private fun getCameraState(): CameraState =
+        binding.mapView.getMapboxMap().cameraState
 
 }
