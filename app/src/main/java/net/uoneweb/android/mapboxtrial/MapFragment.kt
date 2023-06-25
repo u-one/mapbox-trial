@@ -15,10 +15,13 @@ import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.mapbox.android.gestures.RotateGestureDetector
 import com.mapbox.geojson.Point
-import com.mapbox.maps.*
-import com.mapbox.maps.extension.observable.eventdata.CameraChangedEventData
+import com.mapbox.maps.CameraOptions
+import com.mapbox.maps.EdgeInsets
+import com.mapbox.maps.MapEvents
+import com.mapbox.maps.MapView
 import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.*
@@ -33,9 +36,16 @@ import com.mapbox.maps.plugin.viewport.data.FollowPuckViewportStateBearing
 import com.mapbox.maps.plugin.viewport.data.FollowPuckViewportStateOptions
 import com.mapbox.maps.plugin.viewport.state.FollowPuckViewportState
 import com.mapbox.maps.plugin.viewport.viewport
+import dagger.hilt.android.AndroidEntryPoint
 import net.uoneweb.android.mapboxtrial.databinding.FragmentMapBinding
+import net.uoneweb.android.mapboxtrial.wrapper.MapWrapper
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MapFragment : Fragment() {
+
+    @Inject
+    lateinit var mapWrapeer: MapWrapper
 
     private val fragmentViewModel: MapFragmentViewModel by viewModels()
     private var _binding: FragmentMapBinding? = null
@@ -48,6 +58,7 @@ class MapFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentMapBinding.inflate(inflater).apply {
+            mapWrapeer.registerCore(mapView as Any, viewLifecycleOwner.lifecycleScope)
             viewModel = fragmentViewModel
             lifecycleOwner = viewLifecycleOwner
         }
@@ -173,12 +184,8 @@ class MapFragment : Fragment() {
                 MapEvents.SOURCE_DATA_LOADED
             )
         )
-        mapView.getMapboxMap().addOnCameraChangeListener(::onCameraChanged)
     }
 
-    private fun onCameraChanged(eventData: CameraChangedEventData) {
-        updateCurrentInfo()
-    }
 
     private val onIndicatorBearingChangedListener = OnIndicatorBearingChangedListener { bearing ->
         if (trackingMode) {
@@ -275,19 +282,5 @@ class MapFragment : Fragment() {
         super.onDestroy()
     }
 
-    private fun updateCurrentInfo() {
-        val center = getCenterPosition()
-        binding.currentPosition.text =
-            String.format("Center lat=%.6f lon=%.6f", center.latitude(), center.longitude())
-        binding.currentZoom.text = String.format("Zoom=%.2f", getCurrentZoom())
-
-    }
-
-    private fun getCenterPosition(): Point = getCameraState().center
-
-    private fun getCurrentZoom(): Double = getCameraState().zoom
-
-    private fun getCameraState(): CameraState =
-        binding.mapView.getMapboxMap().cameraState
 
 }
