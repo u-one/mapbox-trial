@@ -80,9 +80,6 @@ class MapFragment : Fragment() {
             100.0f * resources.displayMetrics.density
         )
 
-        val drawable = AppCompatResources.getDrawable(requireContext(), R.drawable.red_marker)
-        binding.mapView.setupGestures(drawable)
-
         lifecycleScope.launch {
             binding.mapView.indicatorBearingFlow.collect {
                 fragmentViewModel.setIndicatorBearing(it)
@@ -108,6 +105,8 @@ class MapFragment : Fragment() {
                 binding.mapView.setCameraPosition(it)
             }
         }
+
+        val drawable = AppCompatResources.getDrawable(requireContext(), R.drawable.red_marker)
         lifecycleScope.launch {
             binding.mapView.mapClickFlow.collect {
                 binding.mapView.addPointAnnotationToMap(drawable!!, it)

@@ -1,6 +1,5 @@
 package net.uoneweb.android.mapbox.wrapper
 
-import android.graphics.drawable.Drawable
 import kotlinx.coroutines.flow.StateFlow
 
 interface MapWrapper {
@@ -17,7 +16,6 @@ interface MapWrapper {
     fun setCameraPosition(position: Point)
 
     fun setupScaleBar(position: Int, marginBottom: Float)
-    fun setupGestures(drawable: Drawable?)
 }
 
 data class CameraState(val center: Point, val zoom: Double) {

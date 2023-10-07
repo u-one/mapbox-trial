@@ -133,6 +133,7 @@ class MapViewWrapperView @JvmOverloads constructor(
     private fun initializeMapBox() {
         initializeIndicatorListener()
         initializeCameraListener()
+        initializeGestureListeners()
         registerEventObserver()
     }
 
@@ -162,6 +163,27 @@ class MapViewWrapperView @JvmOverloads constructor(
         }
     }
 
+    private fun initializeGestureListeners() {
+        val gesturesPlugin = binding.mapView.gestures
+        gesturesPlugin.addOnMapClickListener { point ->
+            lifecycleOwner.lifecycleScope.launch {
+                _mapClickFlow.emit(Point(point.latitude(), point.longitude()))
+            }
+            true
+        }
+        gesturesPlugin.addOnRotateListener(object : OnRotateListener {
+            override fun onRotate(detector: RotateGestureDetector) {
+            }
+
+            override fun onRotateBegin(detector: RotateGestureDetector) {
+            }
+
+            override fun onRotateEnd(detector: RotateGestureDetector) {
+            }
+
+        })
+    }
+
     private fun registerEventObserver() {
         mapboxMap.subscribe(
             { event -> Log.d("MapEvents", event.type) },
@@ -184,28 +206,6 @@ class MapViewWrapperView @JvmOverloads constructor(
             this.position = position
             this.marginBottom = marginBottom
         }
-    }
-
-    override fun setupGestures(drawable: Drawable?) {
-        drawable ?: return
-        val gesturesPlugin = binding.mapView.gestures
-        gesturesPlugin.addOnMapClickListener { point ->
-            lifecycleOwner.lifecycleScope.launch {
-                _mapClickFlow.emit(Point(point.latitude(), point.longitude()))
-            }
-            true
-        }
-        gesturesPlugin.addOnRotateListener(object : OnRotateListener {
-            override fun onRotate(detector: RotateGestureDetector) {
-            }
-
-            override fun onRotateBegin(detector: RotateGestureDetector) {
-            }
-
-            override fun onRotateEnd(detector: RotateGestureDetector) {
-            }
-
-        })
     }
 
     fun addPointAnnotationToMap(
