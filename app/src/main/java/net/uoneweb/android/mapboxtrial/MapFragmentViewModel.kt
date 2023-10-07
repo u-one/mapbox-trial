@@ -16,6 +16,10 @@ class MapFragmentViewModel @Inject constructor() : ViewModel() {
     private val _trackingMode = MutableLiveData(false)
     val trackingMode: LiveData<Boolean> = _trackingMode
 
+    fun setTrackingMode(enable: Boolean) {
+        _trackingMode.postValue(enable)
+    }
+
     fun toggleTrackingMode() {
         val nextMode = _trackingMode.value != true
         _trackingMode.postValue(nextMode)
@@ -55,6 +59,4 @@ class MapFragmentViewModel @Inject constructor() : ViewModel() {
     fun zoomText() = _cameraStateFlow.map {
         String.format("Zoom=%.2f", it.zoom)
     }.stateIn(viewModelScope, SharingStarted.Lazily, "")
-
-
 }

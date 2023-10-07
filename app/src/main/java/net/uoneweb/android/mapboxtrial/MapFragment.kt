@@ -74,7 +74,7 @@ class MapFragment : Fragment() {
             binding.mapView.flyTo(0.0, Point(35.67991, 139.76269), 12.0)
         }
 
-        setTrackingMode(false)
+        fragmentViewModel.setTrackingMode(false)
         binding.mapView.setupScaleBar(
             Gravity.BOTTOM or Gravity.START,
             100.0f * resources.displayMetrics.density
@@ -108,15 +108,12 @@ class MapFragment : Fragment() {
                 binding.mapView.setCameraPosition(it)
             }
         }
+        lifecycleScope.launch {
+            binding.mapView.mapClickFlow.collect {
+                binding.mapView.addPointAnnotationToMap(drawable!!, it)
+            }
+        }
     }
-
-
-    private var trackingMode: Boolean = false
-
-    private fun setTrackingMode(enable: Boolean) {
-        trackingMode = enable == true
-    }
-
 
     override fun onStart() {
         super.onStart()

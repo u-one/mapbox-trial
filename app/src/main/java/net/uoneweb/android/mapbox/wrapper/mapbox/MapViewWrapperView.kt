@@ -1,9 +1,6 @@
 package net.uoneweb.android.mapbox.wrapper.mapbox
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.Log
@@ -12,13 +9,11 @@ import android.widget.FrameLayout
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.mapbox.android.gestures.RotateGestureDetector
-import com.mapbox.geojson.Point
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MapEvents
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
 import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
-import com.mapbox.maps.plugin.annotation.generated.CircleAnnotation
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
 import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
 import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadErrorListener
@@ -27,17 +22,24 @@ import com.mapbox.maps.plugin.gestures.gestures
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.maps.plugin.locationcomponent.location2
 import com.mapbox.maps.plugin.scalebar.scalebar
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import net.uoneweb.android.mapbox.wrapper.BitmapFactory
 import net.uoneweb.android.mapbox.wrapper.CameraState
 import net.uoneweb.android.mapbox.wrapper.MapWrapper
+import net.uoneweb.android.mapbox.wrapper.Point
 import net.uoneweb.android.mapboxtrial.R
 import net.uoneweb.android.mapboxtrial.databinding.ViewMapviewwrapperBinding
+import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
+@AndroidEntryPoint
 class MapViewWrapperView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -45,9 +47,13 @@ class MapViewWrapperView @JvmOverloads constructor(
     defStyleRes: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr, defStyleRes), MapWrapper {
 
+    @Inject
+    lateinit var bitmapFactory: BitmapFactory
 
     private val _binding: ViewMapviewwrapperBinding
     private val binding get() = _binding
+
+    private val lifecycleOwner get() = findViewTreeLifecycleOwner()!!
 
     private val locationComponentPlugin get() = binding.mapView.location
     private val locationComponentPlugin2 get() = binding.mapView.location2
@@ -56,21 +62,24 @@ class MapViewWrapperView @JvmOverloads constructor(
 
     private val _indicatorBearingFlow = MutableStateFlow(0.0)
     private val _indicatorPositionFlow =
-        MutableStateFlow(net.uoneweb.android.mapbox.wrapper.Point(0.0, 0.0))
+        MutableStateFlow(Point(0.0, 0.0))
     private val _cameraStateFlow = MutableStateFlow(CameraState.DEFAULT)
 
     override val indicatorBearingFlow: StateFlow<Double> = _indicatorBearingFlow
 
-    override val indicatorPositionFlow: StateFlow<net.uoneweb.android.mapbox.wrapper.Point> =
+    override val indicatorPositionFlow: StateFlow<Point> =
         _indicatorPositionFlow
 
     override val cameraStateFlow: StateFlow<CameraState> = _cameraStateFlow
+
+    private val _mapClickFlow: MutableSharedFlow<Point> = MutableSharedFlow()
+    val mapClickFlow: Flow<Point> = _mapClickFlow
 
     override fun currentZoom(): Double {
         return mapboxMap.cameraState.zoom
     }
 
-    override fun getCenterPosition(): net.uoneweb.android.mapbox.wrapper.Point {
+    override fun getCenterPosition(): Point {
         val center = mapboxMap.cameraState.center
         return ObjectConverter.toPoint(center)
     }
@@ -79,12 +88,13 @@ class MapViewWrapperView @JvmOverloads constructor(
         mapboxMap.setCamera(CameraOptions.Builder().bearing(bearing).build())
     }
 
-    override fun setCameraPosition(position: net.uoneweb.android.mapbox.wrapper.Point) {
+    override fun setCameraPosition(position: Point) {
         val point = com.mapbox.geojson.Point.fromLngLat(position.lon, position.lat)
         mapboxMap.setCamera(CameraOptions.Builder().center(point).build())
     }
 
-    fun setCameraPosition(position: net.uoneweb.android.mapbox.wrapper.Point, bearing: Double) {
+    @Suppress("unused")
+    fun setCameraPosition(position: Point, bearing: Double) {
         val point = com.mapbox.geojson.Point.fromLngLat(position.lon, position.lat)
         mapboxMap.setCamera(
             CameraOptions.Builder()
@@ -93,9 +103,6 @@ class MapViewWrapperView @JvmOverloads constructor(
                 .build()
         )
     }
-
-
-    private var circleAnnotation: CircleAnnotation? = null
 
     init {
         _binding = ViewMapviewwrapperBinding.inflate(
@@ -111,7 +118,7 @@ class MapViewWrapperView @JvmOverloads constructor(
                 val zoom = getFloat(R.styleable.MapViewWrapperView_map_cameraZoom, 0f)
                 binding.mapView.getMapboxMap().setCamera(
                     CameraOptions.Builder()
-                        .center(Point.fromLngLat(lng.toDouble(), lat.toDouble()))
+                        .center(com.mapbox.geojson.Point.fromLngLat(lng.toDouble(), lat.toDouble()))
                         .zoom(zoom.toDouble())
                         .build()
                 )
@@ -131,13 +138,13 @@ class MapViewWrapperView @JvmOverloads constructor(
 
     private fun initializeIndicatorListener() {
         locationComponentPlugin.addOnIndicatorBearingChangedListener { bearing ->
-            findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+            lifecycleOwner.lifecycleScope.launch {
                 _indicatorBearingFlow.emit(bearing)
             }
 
         }
         locationComponentPlugin.addOnIndicatorPositionChangedListener { point ->
-            findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+            lifecycleOwner.lifecycleScope.launch {
                 _indicatorPositionFlow.emit(
                     ObjectConverter.toPoint(point)
                 )
@@ -147,7 +154,7 @@ class MapViewWrapperView @JvmOverloads constructor(
 
     private fun initializeCameraListener() {
         mapboxMap.addOnCameraChangeListener {
-            findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+            lifecycleOwner.lifecycleScope.launch {
                 _cameraStateFlow.emit(
                     ObjectConverter.toCameraState(mapboxMap.cameraState)
                 )
@@ -183,8 +190,9 @@ class MapViewWrapperView @JvmOverloads constructor(
         drawable ?: return
         val gesturesPlugin = binding.mapView.gestures
         gesturesPlugin.addOnMapClickListener { point ->
-            //addCircleAnnotation(mapView, point)
-            addPointAnnotationToMap(drawable, point)
+            lifecycleOwner.lifecycleScope.launch {
+                _mapClickFlow.emit(Point(point.latitude(), point.longitude()))
+            }
             true
         }
         gesturesPlugin.addOnRotateListener(object : OnRotateListener {
@@ -200,37 +208,20 @@ class MapViewWrapperView @JvmOverloads constructor(
         })
     }
 
-    private fun addPointAnnotationToMap(drawable: Drawable, point: com.mapbox.geojson.Point) {
-        convertDrawableToBitmap(drawable)?.let {
+    fun addPointAnnotationToMap(
+        drawable: Drawable,
+        point: Point
+    ) {
+        bitmapFactory.fromDrawable(drawable)?.let {
             val annotationApi = binding.mapView.annotations
             val pointAnnotationManager = annotationApi.createPointAnnotationManager()
             val pointAnntationOptions: PointAnnotationOptions = PointAnnotationOptions()
-                .withPoint(point)
+                .withPoint(com.mapbox.geojson.Point.fromLngLat(point.lon, point.lat))
                 .withIconImage(it)
             pointAnnotationManager.create(pointAnntationOptions)
         }
     }
 
-    private fun convertDrawableToBitmap(sourceDrawable: Drawable?): Bitmap? {
-        if (sourceDrawable == null) {
-            return null
-        }
-        return if (sourceDrawable is BitmapDrawable) {
-            sourceDrawable.bitmap
-        } else {
-            val constantState = sourceDrawable.constantState ?: return null
-            val drawable = constantState.newDrawable().mutate()
-            val bitmap: Bitmap = Bitmap.createBitmap(
-                drawable.intrinsicWidth,
-                drawable.intrinsicHeight,
-                Bitmap.Config.ARGB_8888
-            )
-            val canvas = Canvas(bitmap)
-            drawable.setBounds(0, 0, canvas.width, canvas.height)
-            drawable.draw(canvas)
-            bitmap
-        }
-    }
 
     suspend fun loadStyle(style: MapStyleImpl) = suspendCoroutine { continuation ->
         binding.mapView.getMapboxMap().loadStyleUri(
@@ -261,7 +252,7 @@ class MapViewWrapperView @JvmOverloads constructor(
         }
     }
 
-    fun flyTo(bearing: Double, center: net.uoneweb.android.mapbox.wrapper.Point, zoom: Double) {
+    fun flyTo(bearing: Double, center: Point, zoom: Double) {
         mapboxMap.flyTo(
             CameraOptions.Builder()
                 .bearing(bearing)
@@ -271,22 +262,21 @@ class MapViewWrapperView @JvmOverloads constructor(
         )
     }
 
-    /*
-fun setupViewportPlugin(mapView: MapView) {
-    val viewportPlugin = mapView.viewport
-    val followPuckViewportState: FollowPuckViewportState =
-        viewportPlugin.makeFollowPuckViewportState(
-            FollowPuckViewportStateOptions.Builder()
-                .bearing(FollowPuckViewportStateBearing.Constant(0.0))
-                .padding(EdgeInsets(100.0 * resources.displayMetrics.density, 0.0, 0.0, 0.0))
-                .pitch(0.0)
-                .build()
-        )
+/*
+    fun setupViewportPlugin(mapView: MapView) {
+        val viewportPlugin = mapView.viewport
+        val followPuckViewportState: FollowPuckViewportState =
+            viewportPlugin.makeFollowPuckViewportState(
+                FollowPuckViewportStateOptions.Builder()
+                    .bearing(FollowPuckViewportStateBearing.Constant(0.0))
+                    .padding(EdgeInsets(100.0 * resources.displayMetrics.density, 0.0, 0.0, 0.0))
+                    .pitch(0.0)
+                    .build()
+            )
 
-    viewportPlugin.transitionTo(followPuckViewportState) { success ->
+        viewportPlugin.transitionTo(followPuckViewportState) { success ->
+        }
     }
-}
-
 */
 
 }

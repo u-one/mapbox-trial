@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Test
 
 class ArchitectureTest {
     @Test
-    fun test() {
+    fun mapboxComponentsAreOnlyUsedFromWrapperLayer() {
         val importedClasses = ClassFileImporter().importPackages("net.uoneweb.android.mapboxtrial")
-        val rule = noClasses().should().accessClassesThat().resideInAPackage("com.mapbox.maps..")
+        val rule = noClasses().should().accessClassesThat().resideInAPackage("com.mapbox..")
         rule.check(importedClasses)
     }
 
