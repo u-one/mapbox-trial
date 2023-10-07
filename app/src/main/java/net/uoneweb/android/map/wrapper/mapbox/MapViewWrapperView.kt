@@ -28,10 +28,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import net.uoneweb.android.map.wrapper.BitmapFactory
-import net.uoneweb.android.map.wrapper.CameraState
-import net.uoneweb.android.map.wrapper.MapWrapper
-import net.uoneweb.android.map.wrapper.Point
+import net.uoneweb.android.map.wrapper.*
 import net.uoneweb.android.map.wrapper.mapbox.extensions.wrapper
 import net.uoneweb.android.mapboxtrial.R
 import net.uoneweb.android.mapboxtrial.databinding.ViewMapviewwrapperBinding
@@ -56,10 +53,10 @@ class MapViewWrapperView @JvmOverloads constructor(
 
     private val lifecycleOwner get() = findViewTreeLifecycleOwner()!!
 
+    private val mapboxMap get() = binding.mapView.getMapboxMap()
     private val locationComponentPlugin get() = binding.mapView.location
     private val locationComponentPlugin2 get() = binding.mapView.location2
-
-    private val mapboxMap get() = binding.mapView.getMapboxMap()
+    private val pointAnnotationManager get() = binding.mapView.annotations.createPointAnnotationManager()
 
     private val _indicatorBearingFlow = MutableStateFlow(0.0)
     private val _indicatorPositionFlow =
@@ -212,17 +209,15 @@ class MapViewWrapperView @JvmOverloads constructor(
     fun addPointAnnotationToMap(
         drawable: Drawable,
         point: Point
-    ) {
-        bitmapFactory.fromDrawable(drawable)?.let {
-            val annotationApi = binding.mapView.annotations
-            val pointAnnotationManager = annotationApi.createPointAnnotationManager()
-            val pointAnntationOptions: PointAnnotationOptions = PointAnnotationOptions()
+    ): PointAnnotation? {
+        return bitmapFactory.fromDrawable(drawable)?.let {
+            val options = PointAnnotationOptions()
                 .withPoint(com.mapbox.geojson.Point.fromLngLat(point.lon, point.lat))
                 .withIconImage(it)
-            pointAnnotationManager.create(pointAnntationOptions)
+
+            pointAnnotationManager.create(options).wrapper()
         }
     }
-
 
     suspend fun loadStyle(style: MapStyleImpl) = suspendCoroutine { continuation ->
         binding.mapView.getMapboxMap().loadStyleUri(
