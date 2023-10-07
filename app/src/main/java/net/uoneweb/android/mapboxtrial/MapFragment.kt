@@ -10,15 +10,13 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import net.uoneweb.android.mapbox.wrapper.MapWrapper
+import kotlinx.coroutines.launch
+import net.uoneweb.android.mapbox.wrapper.Point
+import net.uoneweb.android.mapbox.wrapper.mapbox.MapStyleImpl
 import net.uoneweb.android.mapboxtrial.databinding.FragmentMapBinding
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MapFragment : Fragment() {
-
-    @Inject
-    lateinit var mapWrapeer: MapWrapper
 
     private val fragmentViewModel: MapFragmentViewModel by viewModels()
     private var _binding: FragmentMapBinding? = null
@@ -31,7 +29,6 @@ class MapFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentMapBinding.inflate(inflater).apply {
-            mapWrapeer.registerCore(mapView as Any, viewLifecycleOwner.lifecycleScope)
             viewModel = fragmentViewModel
             lifecycleOwner = viewLifecycleOwner
         }
@@ -47,7 +44,6 @@ class MapFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // TODO: create MapViewWrapper
         initializeMapView()
         //setupFloatingActionButton()
     }
@@ -72,14 +68,46 @@ class MapFragment : Fragment() {
 
 
     private fun initializeMapView() {
+        lifecycleScope.launch {
+            binding.mapView.loadStyle(MapStyleImpl.STYLE_DEFAULT)
+            binding.mapView.updateCurrentLocationSetting(true, false, true, true)
+            binding.mapView.flyTo(0.0, Point(35.67991, 139.76269), 12.0)
+        }
+
         setTrackingMode(false)
-        mapWrapeer.setupScaleBarPlugin(
+        binding.mapView.setupScaleBar(
             Gravity.BOTTOM or Gravity.START,
             100.0f * resources.displayMetrics.density
         )
-        val drawable = AppCompatResources.getDrawable(requireContext(), R.drawable.red_marker)
-        mapWrapeer.setupGesturesPlugin(drawable)
 
+        val drawable = AppCompatResources.getDrawable(requireContext(), R.drawable.red_marker)
+        binding.mapView.setupGestures(drawable)
+
+        lifecycleScope.launch {
+            binding.mapView.indicatorBearingFlow.collect {
+                fragmentViewModel.setIndicatorBearing(it)
+            }
+        }
+        lifecycleScope.launch {
+            binding.mapView.indicatorPositionFlow.collect {
+                fragmentViewModel.setIndicatorPosition(it)
+            }
+        }
+        lifecycleScope.launch {
+            binding.mapView.cameraStateFlow.collect {
+                fragmentViewModel.setCameraState(it)
+            }
+        }
+        lifecycleScope.launch {
+            fragmentViewModel.indicatorBearingFlow.collect {
+                binding.mapView.setCameraBearing(it)
+            }
+        }
+        lifecycleScope.launch {
+            fragmentViewModel.indicatorPositionFlow.collect {
+                binding.mapView.setCameraPosition(it)
+            }
+        }
     }
 
 

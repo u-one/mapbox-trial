@@ -7,11 +7,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import net.uoneweb.android.mapbox.wrapper.MapWrapper
+import net.uoneweb.android.mapbox.wrapper.CameraState
+import net.uoneweb.android.mapbox.wrapper.Point
 import javax.inject.Inject
 
 @HiltViewModel
-class MapFragmentViewModel @Inject constructor(private val map: MapWrapper) : ViewModel() {
+class MapFragmentViewModel @Inject constructor() : ViewModel() {
     private val _trackingMode = MutableLiveData(false)
     val trackingMode: LiveData<Boolean> = _trackingMode
 
@@ -20,26 +21,38 @@ class MapFragmentViewModel @Inject constructor(private val map: MapWrapper) : Vi
         _trackingMode.postValue(nextMode)
     }
 
-    init {
+    private fun isTrackingMode(): Boolean = _trackingMode.value == true
+
+    private val _indicatorBearingFlow: MutableStateFlow<Double> = MutableStateFlow(0.0)
+    private val _indicatorPositionFlow: MutableStateFlow<Point> = MutableStateFlow(Point(0.0, 0.0))
+    private val _cameraStateFlow = MutableStateFlow<CameraState>(CameraState.DEFAULT)
+
+    val indicatorBearingFlow: Flow<Double> = _indicatorBearingFlow.filter { isTrackingMode() }
+    val indicatorPositionFlow: Flow<Point> = _indicatorPositionFlow.filter { isTrackingMode() }
+
+    fun setIndicatorBearing(it: Double) {
         viewModelScope.launch {
-            map.indicatorBearing().filter {
-                _trackingMode.value == true
-            }.map {
-                map.setCameraBearing(it)
-            }
-            map.indicatorPosition().filter {
-                _trackingMode.value == true
-            }.map {
-                map.setCameraPosition(it)
-            }
+            _indicatorBearingFlow.emit(it)
         }
     }
 
-    fun centerPosition(): StateFlow<String> = map.cameraStateFlow().map {
+    fun setIndicatorPosition(it: Point) {
+        viewModelScope.launch {
+            _indicatorPositionFlow.emit(it)
+        }
+    }
+
+    fun setCameraState(it: CameraState) {
+        viewModelScope.launch {
+            _cameraStateFlow.emit(it)
+        }
+    }
+
+    fun centerPosition(): StateFlow<String> = _cameraStateFlow.map {
         String.format("Center lat=%.6f lon=%.6f", it.center.lat, it.center.lon)
     }.stateIn(viewModelScope, SharingStarted.Lazily, "")
 
-    fun zoom() = map.cameraStateFlow().map {
+    fun zoomText() = _cameraStateFlow.map {
         String.format("Zoom=%.2f", it.zoom)
     }.stateIn(viewModelScope, SharingStarted.Lazily, "")
 

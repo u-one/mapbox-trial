@@ -1,0 +1,7 @@
+<resources>
+    <declare-styleable name="MapViewWrapperView">
+        <attr name="map_cameraTargetLat" format="float" />
+        <attr name="map_cameraTargetLng" format="float" />
+        <attr name="map_cameraZoom" format="float" />
+    </declare-styleable>
+</resources>

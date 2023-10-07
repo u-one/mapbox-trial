@@ -22,13 +22,13 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <com.mapbox.maps.MapView xmlns:mapbox="http://schemas.android.com/apk/res-auto"
+            <net.uoneweb.android.mapbox.wrapper.mapbox.MapViewWrapperView
                 android:id="@+id/mapView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                mapbox:mapbox_cameraTargetLat="40.7128"
-                mapbox:mapbox_cameraTargetLng="-74.0060"
-                mapbox:mapbox_cameraZoom="9.0"
+                app:map_cameraTargetLat="40.7128"
+                app:map_cameraTargetLng="-74.0060"
+                app:map_cameraZoom="9.0"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
@@ -81,7 +81,7 @@
                         android:id="@+id/currentZoom"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@{viewModel.zoom}" />
+                        android:text="@{viewModel.zoomText()}" />
                 </androidx.appcompat.widget.LinearLayoutCompat>
 
 
