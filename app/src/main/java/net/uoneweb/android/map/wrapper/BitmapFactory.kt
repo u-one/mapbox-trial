@@ -1,4 +1,4 @@
-package net.uoneweb.android.mapbox.wrapper
+package net.uoneweb.android.map.wrapper
 
 import android.graphics.Bitmap
 import android.graphics.Canvas

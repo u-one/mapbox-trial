@@ -1,4 +1,4 @@
-package net.uoneweb.android.mapbox.wrapper
+package net.uoneweb.android.map.wrapper
 
 import kotlinx.coroutines.flow.StateFlow
 
@@ -16,10 +16,4 @@ interface MapWrapper {
     fun setCameraPosition(position: Point)
 
     fun setupScaleBar(position: Int, marginBottom: Float)
-}
-
-data class CameraState(val center: Point, val zoom: Double) {
-    companion object {
-        val DEFAULT = CameraState(Point(0.0, 0.0), 0.0)
-    }
 }

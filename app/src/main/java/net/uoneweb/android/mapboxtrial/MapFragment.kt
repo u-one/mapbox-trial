@@ -11,8 +11,8 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import net.uoneweb.android.mapbox.wrapper.Point
-import net.uoneweb.android.mapbox.wrapper.mapbox.MapStyleImpl
+import net.uoneweb.android.map.wrapper.Point
+import net.uoneweb.android.map.wrapper.mapbox.MapStyleImpl
 import net.uoneweb.android.mapboxtrial.databinding.FragmentMapBinding
 
 @AndroidEntryPoint

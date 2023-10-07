@@ -1,4 +1,4 @@
-package net.uoneweb.android.mapbox.wrapper.mapbox
+package net.uoneweb.android.map.wrapper.mapbox
 
 /*
 @Module

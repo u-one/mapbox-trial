@@ -7,8 +7,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import net.uoneweb.android.mapbox.wrapper.CameraState
-import net.uoneweb.android.mapbox.wrapper.Point
+import net.uoneweb.android.map.wrapper.CameraState
+import net.uoneweb.android.map.wrapper.Point
 import javax.inject.Inject
 
 @HiltViewModel

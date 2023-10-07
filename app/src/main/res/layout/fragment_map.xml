@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <net.uoneweb.android.mapbox.wrapper.mapbox.MapViewWrapperView
+            <net.uoneweb.android.map.wrapper.mapbox.MapViewWrapperView
                 android:id="@+id/mapView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -44,7 +44,8 @@
                 android:onClick="@{() -> viewModel.toggleTrackingMode()}"
                 android:layout_margin="10dp"
                 android:backgroundTint="@{viewModel.trackingMode ? @color/purple_700 : @color/teal_700}"
-                android:src="@drawable/ic_baseline_my_location_24" />
+                android:src="@drawable/ic_baseline_my_location_24"
+                android:contentDescription="@string/fab" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

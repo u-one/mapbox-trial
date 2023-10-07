@@ -1,4 +1,4 @@
-package net.uoneweb.android.mapbox.wrapper.mapbox
+package net.uoneweb.android.map.wrapper.mapbox
 
 import android.content.Context
 import android.graphics.drawable.Drawable
@@ -28,10 +28,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import net.uoneweb.android.mapbox.wrapper.BitmapFactory
-import net.uoneweb.android.mapbox.wrapper.CameraState
-import net.uoneweb.android.mapbox.wrapper.MapWrapper
-import net.uoneweb.android.mapbox.wrapper.Point
+import net.uoneweb.android.map.wrapper.BitmapFactory
+import net.uoneweb.android.map.wrapper.CameraState
+import net.uoneweb.android.map.wrapper.MapWrapper
+import net.uoneweb.android.map.wrapper.Point
+import net.uoneweb.android.map.wrapper.mapbox.extensions.wrapper
 import net.uoneweb.android.mapboxtrial.R
 import net.uoneweb.android.mapboxtrial.databinding.ViewMapviewwrapperBinding
 import javax.inject.Inject
@@ -81,7 +82,7 @@ class MapViewWrapperView @JvmOverloads constructor(
 
     override fun getCenterPosition(): Point {
         val center = mapboxMap.cameraState.center
-        return ObjectConverter.toPoint(center)
+        return center.wrapper()
     }
 
     override fun setCameraBearing(bearing: Double) {
@@ -147,7 +148,7 @@ class MapViewWrapperView @JvmOverloads constructor(
         locationComponentPlugin.addOnIndicatorPositionChangedListener { point ->
             lifecycleOwner.lifecycleScope.launch {
                 _indicatorPositionFlow.emit(
-                    ObjectConverter.toPoint(point)
+                    point.wrapper()
                 )
             }
         }
@@ -157,7 +158,7 @@ class MapViewWrapperView @JvmOverloads constructor(
         mapboxMap.addOnCameraChangeListener {
             lifecycleOwner.lifecycleScope.launch {
                 _cameraStateFlow.emit(
-                    ObjectConverter.toCameraState(mapboxMap.cameraState)
+                    mapboxMap.cameraState.wrapper()
                 )
             }
         }
