@@ -36,6 +36,12 @@ android {
         enabled = true
     }
     namespace 'net.uoneweb.android.mapboxtrial'
+
+    testOptions {
+        unitTests.all {
+            useJUnitPlatform()
+        }
+    }
 }
 
 dependencies {
@@ -52,10 +58,14 @@ dependencies {
     implementation "com.google.dagger:hilt-android:2.44"
     kapt "com.google.dagger:hilt-android-compiler:2.44"
 
-
-    testImplementation 'junit:junit:4.13.2'
+    testImplementation("junit:junit:4.13.2")
+    testImplementation(platform('org.junit:junit-bom:5.10.0'))
+    testImplementation "org.junit.jupiter:junit-jupiter"
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    // Architecture
+    testImplementation 'com.tngtech.archunit:archunit:1.1.0'
 }
 
 kapt {

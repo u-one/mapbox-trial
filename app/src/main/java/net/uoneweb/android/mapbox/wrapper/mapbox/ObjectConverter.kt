@@ -1,7 +1,7 @@
-package net.uoneweb.android.mapboxtrial.wrapper.mapbox
+package net.uoneweb.android.mapbox.wrapper.mapbox
 
-import net.uoneweb.android.mapboxtrial.wrapper.CameraState
-import net.uoneweb.android.mapboxtrial.wrapper.Point
+import net.uoneweb.android.mapbox.wrapper.CameraState
+import net.uoneweb.android.mapbox.wrapper.Point
 
 object ObjectConverter {
     fun toPoint(point: com.mapbox.geojson.Point): Point {

@@ -4,8 +4,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import net.uoneweb.android.mapboxtrial.wrapper.MapWrapper
-import net.uoneweb.android.mapboxtrial.wrapper.mapbox.MapBoxWrapper
+import net.uoneweb.android.mapbox.wrapper.MapWrapper
+import net.uoneweb.android.mapbox.wrapper.mapbox.MapBoxWrapper
 import javax.inject.Singleton
 
 @Module

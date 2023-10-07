@@ -1,5 +1,6 @@
-package net.uoneweb.android.mapboxtrial.wrapper
+package net.uoneweb.android.mapbox.wrapper
 
+import android.graphics.drawable.Drawable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +17,9 @@ interface MapWrapper {
     fun indicatorPosition(): Flow<Point>
     fun setCameraBearing(bearing: Double)
     fun setCameraPosition(position: Point)
+
+    fun setupScaleBarPlugin(position: Int, marginBottom: Float)
+    fun setupGesturesPlugin(drawable: Drawable?)
 }
 
 data class Point(val lat: Double, val lon: Double)
