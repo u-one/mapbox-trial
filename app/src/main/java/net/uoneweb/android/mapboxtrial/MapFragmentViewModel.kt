@@ -5,10 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import net.uoneweb.android.mapbox.wrapper.MapWrapper
 import javax.inject.Inject
@@ -25,15 +22,15 @@ class MapFragmentViewModel @Inject constructor(private val map: MapWrapper) : Vi
 
     init {
         viewModelScope.launch {
-            map.indicatorBearing().collect {
-                if (_trackingMode.value == true) {
-                    map.setCameraBearing(it)
-                }
+            map.indicatorBearing().filter {
+                _trackingMode.value == true
+            }.map {
+                map.setCameraBearing(it)
             }
-            map.indicatorPosition().collect {
-                if (_trackingMode.value == true) {
-                    map.setCameraPosition(it)
-                }
+            map.indicatorPosition().filter {
+                _trackingMode.value == true
+            }.map {
+                map.setCameraPosition(it)
             }
         }
     }
