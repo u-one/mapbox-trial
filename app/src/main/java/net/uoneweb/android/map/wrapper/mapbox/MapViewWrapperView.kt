@@ -12,6 +12,7 @@ import com.mapbox.android.gestures.RotateGestureDetector
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.MapEvents
 import com.mapbox.maps.extension.observable.eventdata.MapLoadingErrorEventData
+import com.mapbox.maps.plugin.animation.easeTo
 import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
@@ -37,13 +38,20 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
+
 @AndroidEntryPoint
 class MapViewWrapperView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
-    defStyleRes: Int = 0
+    defStyleRes: Int = 0,
+    customAttrs: CustomAttributes? = null
 ) : FrameLayout(context, attrs, defStyleAttr, defStyleRes), MapWrapper {
+
+    data class CustomAttributes(
+        val cameraTarget: Point? = null,
+        val cameraZoom: Double? = null
+    )
 
     @Inject
     lateinit var bitmapFactory: BitmapFactory
@@ -123,6 +131,20 @@ class MapViewWrapperView @JvmOverloads constructor(
             } finally {
                 recycle()
             }
+        }
+
+        if (customAttrs != null) {
+            val builder = CameraOptions.Builder()
+            customAttrs.cameraTarget?.let {
+                builder.center(
+                    com.mapbox.geojson.Point.fromLngLat(
+                        it.lon,
+                        it.lat
+                    )
+                )
+            }
+            customAttrs.cameraZoom?.let { builder.zoom(it) }
+            binding.mapView.getMapboxMap().setCamera(builder.build())
         }
 
         initializeMapBox()
@@ -248,6 +270,16 @@ class MapViewWrapperView @JvmOverloads constructor(
         }
     }
 
+    fun easeTo(bearing: Double, center: Point, zoom: Double) {
+        mapboxMap.easeTo(
+            CameraOptions.Builder()
+                .bearing(bearing)
+                .center(com.mapbox.geojson.Point.fromLngLat(center.lon, center.lat))
+                .zoom(zoom)
+                .build()
+        )
+    }
+
     fun flyTo(bearing: Double, center: Point, zoom: Double) {
         mapboxMap.flyTo(
             CameraOptions.Builder()
@@ -258,21 +290,21 @@ class MapViewWrapperView @JvmOverloads constructor(
         )
     }
 
-/*
-    fun setupViewportPlugin(mapView: MapView) {
-        val viewportPlugin = mapView.viewport
-        val followPuckViewportState: FollowPuckViewportState =
-            viewportPlugin.makeFollowPuckViewportState(
-                FollowPuckViewportStateOptions.Builder()
-                    .bearing(FollowPuckViewportStateBearing.Constant(0.0))
-                    .padding(EdgeInsets(100.0 * resources.displayMetrics.density, 0.0, 0.0, 0.0))
-                    .pitch(0.0)
-                    .build()
-            )
+    /*
+        fun setupViewportPlugin(mapView: MapView) {
+            val viewportPlugin = mapView.viewport
+            val followPuckViewportState: FollowPuckViewportState =
+                viewportPlugin.makeFollowPuckViewportState(
+                    FollowPuckViewportStateOptions.Builder()
+                        .bearing(FollowPuckViewportStateBearing.Constant(0.0))
+                        .padding(EdgeInsets(100.0 * resources.displayMetrics.density, 0.0, 0.0, 0.0))
+                        .pitch(0.0)
+                        .build()
+                )
 
-        viewportPlugin.transitionTo(followPuckViewportState) { success ->
+            viewportPlugin.transitionTo(followPuckViewportState) { success ->
+            }
         }
-    }
-*/
+    */
 
 }

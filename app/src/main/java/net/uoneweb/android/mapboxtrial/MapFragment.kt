@@ -71,7 +71,7 @@ class MapFragment : Fragment() {
         lifecycleScope.launch {
             binding.mapView.loadStyle(MapStyleImpl.STYLE_DEFAULT)
             binding.mapView.updateCurrentLocationSetting(true, false, true, true)
-            binding.mapView.flyTo(0.0, Point(35.67991, 139.76269), 12.0)
+            binding.mapView.flyTo(0.0, Point(35.68066, 139.76192), 14.0)
         }
 
         fragmentViewModel.setTrackingMode(false)
