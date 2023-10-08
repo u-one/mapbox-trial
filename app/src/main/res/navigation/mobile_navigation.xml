@@ -13,8 +13,8 @@
 
     <fragment
         android:id="@+id/navigation_sub"
-        android:name="net.uoneweb.android.mapboxtrial.MapFragment"
+        android:name="net.uoneweb.android.mapboxtrial.SubFragment"
         android:label="@string/title_map_sub"
-        tools:layout="@layout/fragment_map" />
+        tools:layout="@layout/fragment_sub" />
 
 </navigation>
